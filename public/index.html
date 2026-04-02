@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LinkBoard — Share What Matters</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Mono:wght@400;500&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1207;
+    --paper: #f5f0e8;
+    --cream: #ede8dc;
+    --warm: #c8964a;
+    --warm-dim: #e8d5b0;
+    --accent: #b84b2f;
+    --muted: #7a6f5e;
+    --card: #faf7f2;
+    --border: #d9d0be;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Figtree', sans-serif;
+    min-height: 100vh;
+    background-image: 
+      radial-gradient(ellipse 80% 50% at 50% -10%, rgba(200,150,74,0.15) 0%, transparent 60%);
+  }
+
+  /* Grain overlay */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 0; opacity: 0.5;
+  }
+
+  header {
+    text-align: center;
+    padding: 4rem 1rem 2rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--warm);
+    margin-bottom: 0.75rem;
+  }
+
+  h1 {
+    font-family: 'Instrument Serif', serif;
+    font-size: clamp(2.8rem, 7vw, 5rem);
+    line-height: 1;
+    color: var(--ink);
+    letter-spacing: -0.02em;
+  }
+
+  h1 em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .subtitle {
+    margin-top: 0.75rem;
+    color: var(--muted);
+    font-size: 1rem;
+    font-weight: 400;
+  }
+
+  .divider {
+    width: 60px; height: 1px;
+    background: var(--warm);
+    margin: 1.5rem auto;
+    opacity: 0.5;
+  }
+
+  main {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 0 1.25rem 5rem;
+    position: relative; z-index: 1;
+  }
+
+  /* Add link form */
+  .form-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.75rem;
+    margin-bottom: 2.5rem;
+    box-shadow: 0 2px 20px rgba(26,18,7,0.06);
+  }
+
+  .form-title {
+    font-family: 'Instrument Serif', serif;
+    font-size: 1.3rem;
+    margin-bottom: 1.2rem;
+    color: var(--ink);
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  .form-grid .full { grid-column: 1 / -1; }
+
+  label {
+    display: block;
+    font-size: 0.72rem;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.35rem;
+  }
+
+  input, textarea {
+    width: 100%;
+    background: var(--paper);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.6rem 0.85rem;
+    font-family: 'Figtree', sans-serif;
+    font-size: 0.9rem;
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+
+  input:focus, textarea:focus {
+    border-color: var(--warm);
+    box-shadow: 0 0 0 3px rgba(200,150,74,0.12);
+  }
+
+  textarea { resize: vertical; min-height: 72px; }
+
+  .btn-submit {
+    margin-top: 1rem;
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    border-radius: 8px;
+    padding: 0.7rem 1.6rem;
+    font-family: 'Figtree', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    letter-spacing: 0.01em;
+  }
+
+  .btn-submit:hover { background: var(--accent); }
+  .btn-submit:active { transform: scale(0.98); }
+
+  .error-msg {
+    color: var(--accent);
+    font-size: 0.82rem;
+    margin-top: 0.6rem;
+    display: none;
+  }
+
+  /* Links section */
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 1rem;
+  }
+
+  #links-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .link-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.1rem 1.3rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    box-shadow: 0 1px 8px rgba(26,18,7,0.04);
+    animation: slideIn 0.3s ease;
+    transition: box-shadow 0.15s, transform 0.15s;
+  }
+
+  .link-card:hover {
+    box-shadow: 0 4px 20px rgba(26,18,7,0.09);
+    transform: translateY(-1px);
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .link-icon {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    background: var(--warm-dim);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    font-size: 1.1rem;
+  }
+
+  .link-body { flex: 1; min-width: 0; }
+
+  .link-title {
+    font-family: 'Instrument Serif', serif;
+    font-size: 1.1rem;
+    color: var(--ink);
+    text-decoration: none;
+    transition: color 0.12s;
+    display: block;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  .link-title:hover { color: var(--accent); }
+
+  .link-desc {
+    font-size: 0.83rem;
+    color: var(--muted);
+    margin-top: 0.2rem;
+    line-height: 1.45;
+  }
+
+  .link-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.45rem;
+    flex-wrap: wrap;
+  }
+
+  .link-author {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--warm);
+    letter-spacing: 0.05em;
+  }
+
+  .link-date {
+    font-size: 0.65rem;
+    color: var(--border);
+  }
+
+  .link-url-tag {
+    font-size: 0.65rem;
+    color: var(--muted);
+    background: var(--cream);
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+    max-width: 180px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  .btn-delete {
+    background: none; border: none;
+    cursor: pointer;
+    color: var(--border);
+    font-size: 1rem;
+    padding: 0.2rem;
+    border-radius: 6px;
+    transition: color 0.12s, background 0.12s;
+    flex-shrink: 0;
+    line-height: 1;
+  }
+
+  .btn-delete:hover { color: var(--accent); background: rgba(184,75,47,0.08); }
+
+  .empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--muted);
+  }
+
+  .empty-state .big { font-size: 2.5rem; margin-bottom: 0.5rem; }
+  .empty-state p { font-size: 0.9rem; }
+
+  .loading {
+    text-align: center;
+    padding: 2rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+  }
+
+  @media (max-width: 560px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .form-grid .full { grid-column: 1; }
+    h1 { font-size: 2.4rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">✦ Community Board</div>
+  <h1>Link<em>Board</em></h1>
+  <p class="subtitle">Share links that are worth clicking</p>
+  <div class="divider"></div>
+</header>
+
+<main>
+  <div class="form-card">
+    <div class="form-title">Add a link</div>
+    <div class="form-grid">
+      <div class="full">
+        <label>Title *</label>
+        <input type="text" id="f-title" placeholder="Something interesting..." maxlength="100">
+      </div>
+      <div class="full">
+        <label>URL *</label>
+        <input type="url" id="f-url" placeholder="https://...">
+      </div>
+      <div>
+        <label>Description</label>
+        <textarea id="f-desc" placeholder="Why should people click this?" maxlength="300"></textarea>
+      </div>
+      <div>
+        <label>Your name</label>
+        <input type="text" id="f-author" placeholder="Anonymous" maxlength="50">
+      </div>
+    </div>
+    <button class="btn-submit" onclick="submitLink()">Post Link →</button>
+    <div class="error-msg" id="error-msg"></div>
+  </div>
+
+  <div class="section-label" id="count-label">Loading links...</div>
+  <div id="links-list"><div class="loading">fetching links…</div></div>
+</main>
+
+<script>
+const API = '/api/links';
+
+function getFavicon(url) {
+  const emojis = ['🔗','🌐','📄','⭐','🚀','💡','📌','🎯','🔍','📚'];
+  try {
+    const h = new URL(url).hostname;
+    return emojis[h.charCodeAt(0) % emojis.length];
+  } catch { return '🔗'; }
+}
+
+function timeAgo(dateStr) {
+  const s = Math.floor((Date.now() - new Date(dateStr + 'Z')) / 1000);
+  if (s < 60) return 'just now';
+  if (s < 3600) return Math.floor(s/60) + 'm ago';
+  if (s < 86400) return Math.floor(s/3600) + 'h ago';
+  return Math.floor(s/86400) + 'd ago';
+}
+
+async function loadLinks() {
+  try {
+    const res = await fetch(API);
+    const links = await res.json();
+    render(links);
+  } catch {
+    document.getElementById('links-list').innerHTML =
+      '<div class="empty-state"><div class="big">⚠️</div><p>Could not load links.</p></div>';
+  }
+}
+
+function render(links) {
+  const el = document.getElementById('links-list');
+  const label = document.getElementById('count-label');
+  label.textContent = links.length === 0 ? 'No links yet' : `${links.length} link${links.length > 1 ? 's' : ''} shared`;
+
+  if (!links.length) {
+    el.innerHTML = '<div class="empty-state"><div class="big">📭</div><p>Be the first to share something!</p></div>';
+    return;
+  }
+
+  el.innerHTML = links.map(l => `
+    <div class="link-card" id="card-${l.id}">
+      <div class="link-icon">${getFavicon(l.url)}</div>
+      <div class="link-body">
+        <a class="link-title" href="${escHtml(l.url)}" target="_blank" rel="noopener">${escHtml(l.title)}</a>
+        ${l.description ? `<div class="link-desc">${escHtml(l.description)}</div>` : ''}
+        <div class="link-meta">
+          <span class="link-author">✦ ${escHtml(l.author || 'Anonymous')}</span>
+          <span class="link-date">· ${timeAgo(l.created_at)}</span>
+          <span class="link-url-tag">${escHtml(new URL(l.url).hostname)}</span>
+        </div>
+      </div>
+      <button class="btn-delete" title="Remove" onclick="deleteLink(${l.id})">✕</button>
+    </div>
+  `).join('');
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+async function submitLink() {
+  const title = document.getElementById('f-title').value.trim();
+  const url   = document.getElementById('f-url').value.trim();
+  const desc  = document.getElementById('f-desc').value.trim();
+  const author= document.getElementById('f-author').value.trim();
+  const errEl = document.getElementById('error-msg');
+  errEl.style.display = 'none';
+
+  if (!title || !url) { showError('Title and URL are required.'); return; }
+
+  try {
+    const res = await fetch(API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, url, description: desc, author })
+    });
+    const data = await res.json();
+    if (!res.ok) { showError(data.error || 'Something went wrong.'); return; }
+
+    // Clear form
+    ['f-title','f-url','f-desc','f-author'].forEach(id => document.getElementById(id).value = '');
+    loadLinks();
+  } catch { showError('Network error. Please try again.'); }
+}
+
+async function deleteLink(id) {
+  if (!confirm('Remove this link?')) return;
+  await fetch(`${API}/${id}`, { method: 'DELETE' });
+  document.getElementById(`card-${id}`)?.remove();
+  // Update count
+  const cards = document.querySelectorAll('.link-card').length;
+  document.getElementById('count-label').textContent =
+    cards === 0 ? 'No links yet' : `${cards} link${cards > 1 ? 's' : ''} shared`;
+  if (cards === 0) document.getElementById('links-list').innerHTML =
+    '<div class="empty-state"><div class="big">📭</div><p>Be the first to share something!</p></div>';
+}
+
+function showError(msg) {
+  const el = document.getElementById('error-msg');
+  el.textContent = msg; el.style.display = 'block';
+}
+
+// Enter key submits
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.ctrlKey) submitLink();
+});
+
+loadLinks();
+</script>
+</body>
+</html>
